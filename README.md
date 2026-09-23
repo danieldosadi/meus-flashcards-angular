@@ -1,59 +1,36 @@
-# FlashcardsApp
+# Memora — Flashcards de estudo
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
+Aplicação Angular standalone em português, com animação 3D para revelar respostas.
 
-## Development server
+## Executar
 
-To start a local development server, run:
+Requer Node.js 24 (ou versão compatível com Angular 21) e npm.
 
-```bash
-ng serve
+```sh
+npm install
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Abra http://localhost:4200 no navegador.
 
-## Code scaffolding
+## Gerar versão de produção
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```sh
+npm run build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Os arquivos gerados ficam em `dist/memora/browser`.
 
-```bash
-ng generate --help
-```
+## Recursos
 
-## Building
+- Clique no cartão para alternar entre pergunta e resposta.
+- Use as setas da tela para navegar; com o foco fora de botões e campos, as setas do teclado navegam e espaço vira o cartão.
+- Filtre os cartões por matéria, embaralhe a ordem e marque cartões aprendidos.
+- Ative “Só os que faltam” para revisar os cartões ainda não aprendidos.
+- Crie cartões com pergunta, resposta e matéria pelo formulário.
+- Cartões e progresso são salvos no localStorage deste navegador. Não há conta, servidor ou sincronização entre dispositivos. Limpar os dados do navegador remove esse progresso.
+- Layout responsivo, controles acessíveis pelo teclado e respeito à preferência de redução de movimento.
 
-To build the project run:
+Os oito cartões iniciais são exemplos editáveis em `src/main.ts`. O visual fica em `src/styles.css` e a interface em `src/app.html`. As fontes do Google Fonts são opcionais: se a rede estiver indisponível, o navegador usa fontes locais.
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Referência de compatibilidade: https://angular.dev/reference/versions
