@@ -1,0 +1,81 @@
+<header [inert]="modal() || loading()">
+ <a class="brand" href="./"><span class="brand-icon">m.</span> memora <span class="brand-caption">/ flashcards</span></a>
+ <button id="add-card" class="primary" (click)="openModal()">＋ Novo cartão</button>
+</header>
+@if(browserStorage) {
+ <p class="browser-storage-note" role="note">Seus cartões e progresso ficam somente neste navegador, sem sincronização entre dispositivos. Limpar os dados do site remove os estudos salvos.</p>
+}
+@if(storageFailed() || loading()) {
+<div class="disk-status" [class.error]="storageFailed()" [inert]="modal()" role="status">
+ <span>{{diskStatus()}}</span>
+ @if(storageFailed() && !loading()) {<button (click)="retrySave()">Tentar novamente</button>}
+</div>
+}
+<main [inert]="modal() || loading()">
+ <section class="subject-picker" aria-label="Selecionar e gerenciar matérias">
+  <div class="subject-select"><label for="study-subject">MATÉRIA</label><select id="study-subject" [ngModel]="category()" (ngModelChange)="select($event)">@for(cat of categories;track cat){<option [value]="cat">{{cat==='Todos' ? 'Todas as matérias' : cat}} · {{cat==='Todos' ? cards().length : countCategory(cat)}}</option>}</select></div>
+  <div class="subject-tools"><button id="add-subject" class="secondary" (click)="openSubjectModal()">＋ Nova matéria</button><button class="text-button" (click)="editSubject(category())" [disabled]="category()==='Todos'" aria-label="Editar matéria selecionada">Editar</button><button class="text-button danger-text" (click)="requestRemoveSubject(category())" [disabled]="category()==='Todos'" aria-label="Remover matéria selecionada">Remover</button></div>
+ </section>
+ <section class="study" aria-label="Cartões de estudo">
+  <div class="study-overview"><h1 [title]="category()==='Todos' ? 'Todos os cartões' : category()">{{category()==='Todos' ? 'Todos os cartões' : category()}}</h1>
+  <div class="summary"><span><strong>{{cards().length}}</strong> cartões</span><span><strong>{{learned().length}}</strong> aprendidos</span><div class="progress-track" role="progressbar" aria-label="Progresso de aprendizado" [attr.aria-valuenow]="progress()" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="progress()"></span></div><strong>{{progress()}}%</strong></div>
+  </div><div class="toolbar"><label class="review"><input type="checkbox" [checked]="onlyReview()" (change)="review()">Só os que faltam</label><button class="text-button" (click)="shuffle()" [disabled]="filtered().length<2">⇄ Embaralhar</button></div>
+  @if(current(); as card) {
+   <button class="flashcard" [class.flipped]="flipped()" (click)="flipped.set(!flipped())" [attr.aria-label]="flipped() ? 'Resposta: '+card.answer+'. Clique para ver a pergunta.' : 'Pergunta: '+card.question+'. Clique para ver a resposta.'">
+    <span class="card-inner">
+     <span class="face front" [attr.aria-hidden]="flipped()"><span class="card-top"><span class="tag">{{card.category}}</span><span>PERGUNTA</span></span><span class="question">{{card.question}}</span><span class="flip-hint">↻ Clique para ver a resposta</span></span>
+     <span class="face back" [attr.aria-hidden]="!flipped()"><span class="card-top"><span class="tag">{{card.category}}</span><span>RESPOSTA</span></span><span class="answer">{{card.answer}}</span><span class="flip-hint">↻ Clique para voltar</span></span>
+    </span>
+   </button>
+   <div class="card-actions">
+    <button class="learned-button" [class.done]="learned().includes(card.id)" [attr.aria-pressed]="learned().includes(card.id)" (click)="mark()">{{learned().includes(card.id) ? '✓ Aprendido' : '✓ Marcar como aprendido'}}</button>
+    <div class="edit-actions"><button id="edit-card" class="text-button" (click)="editCard()">Editar</button><button id="remove-card" class="text-button danger-text" (click)="requestRemove()">Remover</button></div>
+   </div>
+   <div class="navigation"><button class="secondary" (click)="move(-1)" aria-label="Cartão anterior" [disabled]="filtered().length<2">← Anterior</button><span><strong>{{index()+1}}</strong> de {{filtered().length}}</span><button class="secondary" (click)="move(1)" aria-label="Próximo cartão" [disabled]="filtered().length<2">Próximo →</button></div>
+  } @else {
+   <div class="empty">
+    @if(onlyReview() && (category()==='Todos' ? cards().length : countCategory(category()))>0) {
+     <span class="empty-icon">✓</span><h2>Revisão concluída</h2><p>Você aprendeu todos os cartões desta seleção.</p><button class="secondary" (click)="review()">Rever cartões</button>
+    } @else {
+     <span class="empty-icon">＋</span><h2>Nenhum cartão por aqui</h2><p>Adicione uma pergunta e uma resposta para começar.</p><button class="primary" (click)="openModal()">Criar primeiro cartão</button>
+    }
+   </div>
+  }
+  <p class="keyboard-hint"><kbd>←</kbd> <kbd>→</kbd> navegar <span>·</span> <kbd>espaço</kbd> virar o cartão</p>
+  @if(notice()) {<p class="notice" role="status">{{notice()}}</p>}
+ </section>
+</main>
+@if(modal()) {
+ <div class="overlay" (click)="closeModal()"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" (click)="$event.stopPropagation()">
+  <button class="close" (click)="closeModal()" aria-label="Fechar">×</button>
+  @if(deletingSubject(); as name) {
+   <h2 id="dialog-title">Remover matéria?</h2><blockquote>{{name}}</blockquote>
+   <p>Esta ação remove a matéria e seus {{countCategory(name)}} cartões, incluindo o progresso deles. As outras matérias serão mantidas.</p>
+   <div class="form-actions"><button id="cancel-remove-subject" class="secondary" (click)="closeModal()">Cancelar</button><button class="danger" (click)="removeSubject()">Remover matéria e cartões</button></div>
+  } @else if(creatingSubject()) {
+   <h2 id="dialog-title">{{editingSubject() ? 'Editar matéria' : 'Nova matéria'}}</h2><p>{{editingSubject() ? 'Os cartões e o progresso serão mantidos com o novo nome.' : 'Organize seus próximos cartões por assunto.'}}</p>
+   <form (ngSubmit)="addSubject()">
+    <label for="subject-name">Nome da matéria</label>
+    <input id="subject-name" name="subjectName" [(ngModel)]="subjectName" (ngModelChange)="subjectError.set('')" maxlength="200" required placeholder="Ex.: Estruturas" aria-describedby="subject-error" [attr.aria-invalid]="subjectError() ? 'true' : null">
+    <p id="subject-error" class="field-error" role="alert">{{subjectError()}}</p>
+    <div class="form-actions"><button class="secondary" type="button" (click)="closeModal()">Cancelar</button><button class="primary" type="submit" [disabled]="!subjectName.trim()">{{editingSubject() ? 'Salvar alterações' : 'Criar matéria'}}</button></div>
+   </form>
+  } @else if(deletingCard(); as card) {
+   <h2 id="dialog-title">Remover cartão?</h2><p>A pergunta, a resposta e o progresso deste cartão serão removidos do acervo.</p>
+   <blockquote>{{card.question}}</blockquote>
+   <div class="form-actions"><button id="cancel-remove" class="secondary" (click)="closeModal()">Cancelar</button><button class="danger" (click)="removeCard()">Remover cartão</button></div>
+  } @else {
+   <h2 id="dialog-title">{{editingId() ? 'Editar cartão' : 'Novo cartão'}}</h2>
+   <p>{{editingId() ? 'Se mudar o conteúdo, o cartão volta para revisão.' : 'Uma pergunta de cada vez.'}}</p>
+   <form (ngSubmit)="add()">
+    <label for="category">Matéria</label><select id="category" name="category" [(ngModel)]="newCategory">@for(cat of categories.slice(1);track cat){<option>{{cat}}</option>}</select>
+    <label for="question">Pergunta <span>{{question.length}}/250</span></label><textarea id="question" name="question" [(ngModel)]="question" maxlength="250" rows="3" required placeholder="O que você quer aprender?"></textarea>
+    <label for="answer">Resposta <span>{{answer.length}}/1000</span></label><textarea id="answer" name="answer" [(ngModel)]="answer" maxlength="1000" rows="5" required placeholder="Escreva sua resposta."></textarea>
+    <div class="form-actions"><button class="secondary" type="button" (click)="closeModal()">Cancelar</button><button class="primary" type="submit" [disabled]="!question.trim() || !answer.trim()">{{editingId() ? 'Salvar alterações' : 'Criar cartão'}}</button></div>
+   </form>
+  }
+ </section></div>
+}
+
+
+
