@@ -7,7 +7,8 @@
     "start:server": "node server/server.mjs",
     "build": "ng build",
     "test": "node --test tests/*.test.mjs",
-    "typecheck": "ngc --noEmit -p tsconfig.json"
+    "typecheck": "ngc --noEmit -p tsconfig.json",
+    "build:pages": "ng build --configuration pages --base-href /meus-flashcards-angular/"
   },
   "dependencies": {
     "@angular/common": "^21.0.0",

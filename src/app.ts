@@ -2,6 +2,9 @@ import { Component, HostListener, signal, computed, OnInit } from '@angular/core
 
 import { FormsModule } from '@angular/forms';
 
+// Substituído pelo build pages; o uso local com servidor permanece disponível.
+declare const MEMORA_BROWSER_STORAGE: boolean;
+
 interface Card { id: string; category: string; question: string; answer: string; }
 const initial: Card[] = [];
 const subjects = [
@@ -25,6 +28,7 @@ const subjects = [
  templateUrl:'./app.html'
 })
 export class App implements OnInit {
+ readonly browserStorage = typeof MEMORA_BROWSER_STORAGE !== 'undefined' && MEMORA_BROWSER_STORAGE;
  loading = signal(true);
  diskStatus = signal('Conectando ao salvamento no computador…');
  revision: number | null = null;
@@ -40,6 +44,13 @@ export class App implements OnInit {
 
  async connect() {
   this.loading.set(true);
+  if(this.browserStorage) {
+   // O construtor recupera os dados. Não sobrescrever dados ilegíveis ao abrir.
+   if(!this.storageFailed()) this.diskStatus.set('Cartões e progresso salvos apenas neste navegador.');
+   else this.diskStatus.set('Não foi possível recuperar os dados deste navegador.');
+   this.loading.set(false);
+   return;
+  }
   try {
    const response = await fetch('/api/study', {signal: AbortSignal.timeout(10000)});
    if(!response.ok) throw new Error('Não foi possível abrir o arquivo no computador.');
@@ -68,6 +79,17 @@ export class App implements OnInit {
  }
 
  save(): Promise<boolean> {
+  if(this.browserStorage) {
+   try {
+    localStorage.setItem('memora-arquitetura-v2', JSON.stringify({cards:this.cards(),learned:this.learned(),subjects:this.customSubjects(),removedSubjects:this.removedSubjects(),pending:false}));
+    this.storageFailed.set(false);this.diskStatus.set('✓ Salvo neste navegador');this.notice.set('');
+    return Promise.resolve(true);
+   } catch {
+    this.storageFailed.set(true);this.diskStatus.set('Não foi possível salvar neste navegador.');
+    this.notice.set('Mantenha esta página aberta. Verifique o espaço disponível e a permissão de armazenamento e tente novamente.');
+    return Promise.resolve(false);
+   }
+  }
   this.cache(true);
   const snapshot = { cards: this.cards(), learned: this.learned(), subjects: this.customSubjects(), removedSubjects: this.removedSubjects() };
   this.diskStatus.set('Salvando no computador…');
@@ -98,7 +120,7 @@ export class App implements OnInit {
   return this.queue;
  }
 
- async retrySave() { if(this.revision===null) await this.connect(); else await this.save(); }
+ async retrySave() { if(this.browserStorage) await this.save(); else if(this.revision===null) await this.connect(); else await this.save(); }
 
  @HostListener('window:beforeunload', ['$event']) beforeUnload(event: BeforeUnloadEvent) {
   if(this.storageFailed() || this.diskStatus()==='Salvando no computador…') {event.preventDefault();event.returnValue='';}

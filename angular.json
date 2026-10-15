@@ -1,1 +1,44 @@
-{"$schema":"./node_modules/@angular/cli/lib/config/schema.json","version":1,"cli":{"analytics":false},"projects":{"memora":{"projectType":"application","root":"","sourceRoot":"src","architect":{"build":{"builder":"@angular/build:application","options":{"browser":"src/main.ts","tsConfig":"tsconfig.json","index":"src/index.html","styles":["src/styles.css"],"outputPath":"dist/memora"}},"serve":{"builder":"@angular/build:dev-server","options":{"buildTarget":"memora:build"}}}}}}
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "analytics": false
+  },
+  "projects": {
+    "memora": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.json",
+            "index": "src/index.html",
+            "styles": [
+              "src/styles.css"
+            ],
+            "outputPath": "dist/memora"
+          },
+          "configurations": {
+            "pages": {
+              "define": {
+                "MEMORA_BROWSER_STORAGE": "true"
+              },
+              "outputHashing": "all",
+              "sourceMap": false,
+              "optimization": true
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "memora:build"
+          }
+        }
+      }
+    }
+  }
+}

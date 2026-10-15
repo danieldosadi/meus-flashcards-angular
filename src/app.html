@@ -2,6 +2,9 @@
  <a class="brand" href="./"><span class="brand-icon">m.</span> memora <span class="brand-caption">/ flashcards</span></a>
  <button id="add-card" class="primary" (click)="openModal()">＋ Novo cartão</button>
 </header>
+@if(browserStorage) {
+ <p class="browser-storage-note" role="note">Seus cartões e progresso ficam somente neste navegador, sem sincronização entre dispositivos. Limpar os dados do site remove os estudos salvos.</p>
+}
 @if(storageFailed() || loading()) {
 <div class="disk-status" [class.error]="storageFailed()" [inert]="modal()" role="status">
  <span>{{diskStatus()}}</span>
